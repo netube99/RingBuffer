@@ -32,6 +32,7 @@ uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,
         return RING_BUFFER_ARRAY_ERROR ;//缓冲区数组过小，队列初始化失败
     else
         return RING_BUFFER_ARRAY_SUCCESS ;//缓冲区初始化成功
+        
     
 }
 
@@ -87,7 +88,7 @@ uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle)
         ring_buffer_handle->lenght -- ;//数据量计数-1
         //如果头指针超越了数组末尾，头指针指向数组开头，形成闭环
         if(ring_buffer_handle->head > (ring_buffer_handle->max_lenght - 1))
-        ring_buffer_handle->head = 0 ;
+            ring_buffer_handle->head = 0 ;
     }
     return data ;
 }
@@ -105,9 +106,7 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_da
 {
     //如果不够存储空间存放新数据,返回错误
     if((ring_buffer_handle->lenght + write_lenght) > (ring_buffer_handle->max_lenght))
-    {
         return RING_BUFFER_ARRAY_ERROR ;
-    }
     else
     {
         //设置两次写入长度
@@ -154,9 +153,7 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_da
 uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr, uint32_t read_lenght)
 {
     if(read_lenght > ring_buffer_handle->lenght)
-    {
         return RING_BUFFER_ARRAY_ERROR ;
-    }
     else
     {
         uint32_t Read_size_a, Read_size_b ;

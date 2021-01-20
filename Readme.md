@@ -21,17 +21,17 @@ Ring Buffer 适用于单片机串口收发等应用场景，与普通的数组�
 
 int main()
 {
-	//新建缓冲区数组与Ring Buff操作句柄
-	uint8_t buffer[Read_BUFFER_SIZE] ;
-	ring_buffer RB ;
-	
-	//初始化Ring Buff操作句柄，绑定缓冲区数组；
-	Ring_Buffer_Init(&RB, buffer, Read_BUFFER_SIZE);
-	
+    //新建缓冲区数组与Ring Buff操作句柄
+    uint8_t buffer[Read_BUFFER_SIZE] ;
+    ring_buffer RB ;
+
+    //初始化Ring Buff操作句柄，绑定缓冲区数组；
+    Ring_Buffer_Init(&RB, buffer, Read_BUFFER_SIZE);
+
     //向环形缓冲区写入一段字节和一个字节
-	Ring_Buffer_Write_String(&RB, "hello world", 11);
+    Ring_Buffer_Write_String(&RB, "hello world", 11);
     Ring_Buffer_Write_Byte(&RB, '!');
-    
+
     //读出环形缓冲区中的数据并打印
     uint8_t get[16] ;
     Ring_Buffer_Read_String(&RB, get, 12);

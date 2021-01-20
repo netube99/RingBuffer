@@ -32,8 +32,6 @@ uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,
         return RING_BUFFER_ARRAY_ERROR ;//缓冲区数组过小，队列初始化失败
     else
         return RING_BUFFER_ARRAY_SUCCESS ;//缓冲区初始化成功
-        
-    
 }
 
 /**

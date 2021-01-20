@@ -74,7 +74,7 @@ uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data)
 
 /**
  * \brief 从缓冲区头部读取一个字节
- * \param[out] ring_buffer_handle: 缓冲区结构体句柄
+ * \param[in] ring_buffer_handle: 缓冲区结构体句柄
  * \return 返回读取的字节
 */
 uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle)
@@ -144,7 +144,7 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_da
 
 /**
  * \brief 向缓冲区头部读指定长度的数据
- * \param[out] ring_buffer_handle: 缓冲区结构体句柄
+ * \param[in] ring_buffer_handle: 缓冲区结构体句柄
  * \param[out] out_addr: 读取的数据保存地址
  * \param[in] read_lenght: 要读取的字节数
  * \return 返回缓冲区头部读指定长度字节的结果
@@ -189,7 +189,7 @@ uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output
 
 /**
  * \brief 获取缓冲区里已储存的数据长度
- * \param[out] ring_buffer_handle: 缓冲区结构体句柄
+ * \param[in] ring_buffer_handle: 缓冲区结构体句柄
  * \return 返回缓冲区里已储存的数据长度
 */
 uint32_t Ring_Buffer_Get_Lenght(ring_buffer *ring_buffer_handle)
@@ -199,7 +199,7 @@ uint32_t Ring_Buffer_Get_Lenght(ring_buffer *ring_buffer_handle)
 
 /**
  * \brief 获取缓冲区可用储存空间
- * \param[out] ring_buffer_handle: 缓冲区结构体句柄
+ * \param[in] ring_buffer_handle: 缓冲区结构体句柄
  * \return 返回缓冲区可用储存空间
 */
 uint32_t Ring_Buffer_Get_Free_Size(ring_buffer *ring_buffer_handle)

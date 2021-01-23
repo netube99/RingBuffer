@@ -94,13 +94,13 @@ uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle)
 /**
  * \brief 向缓冲区尾部写指定长度的数据
  * \param[out] ring_buffer_handle: 缓冲区结构体句柄
- * \param[out] input_data: 待写入数组基地址
+ * \param[out] input_addr: 待写入数组基地址
  * \param[in] write_lenght: 要写入的字节数
  * \return 返回缓冲区尾部写指定长度字节的结果
  *      \arg RING_BUFFER_ARRAY_SUCCESS: 写入成功
  *      \arg RING_BUFFER_ARRAY_ERROR: 写入失败
 */
-uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_data, uint32_t write_lenght)
+uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_addr, uint32_t write_lenght)
 {
     //如果不够存储空间存放新数据,返回错误
     if((ring_buffer_handle->lenght + write_lenght) > (ring_buffer_handle->max_lenght))
@@ -124,14 +124,14 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_da
         if(write_size_b != 0)//需要写入两次
         {
             //分别拷贝a、b段数据到储存数组中
-            memcpy(ring_buffer_handle->array_addr + ring_buffer_handle->tail, input_data, write_size_a);
-            memcpy(ring_buffer_handle->array_addr, input_data + write_size_a , write_size_b);
+            memcpy(ring_buffer_handle->array_addr + ring_buffer_handle->tail, input_addr, write_size_a);
+            memcpy(ring_buffer_handle->array_addr, input_addr + write_size_a , write_size_b);
             ring_buffer_handle->lenght += write_lenght ;//记录新存储了多少数据量
             ring_buffer_handle->tail = write_size_b ;//重新定位尾指针位置
         }
         else//只需写入一次
         {
-            memcpy(ring_buffer_handle->array_addr + ring_buffer_handle->tail, input_data, write_size_a);
+            memcpy(ring_buffer_handle->array_addr + ring_buffer_handle->tail, input_addr, write_size_a);
             ring_buffer_handle->lenght += write_lenght ;//记录新存储了多少数据量
             ring_buffer_handle->tail += write_size_a ;//重新定位尾指针位置
         }

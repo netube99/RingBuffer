@@ -7,7 +7,10 @@
  * 节省了手动清空普通缓存区的时间，能够提升串口程序的运行效率；
  * \author netube_99\netube@163.com
  * \date 2021.01.23
- * \version V1.1
+ * \version V1.1.0
+ * 
+ * 2021.01.19 V1.0.0 发布第一版本
+ * 2021.01.24 V1.1.0 增加匹配字符查找函数
 */
 
 #include "ring_buffer.h"
@@ -210,14 +213,16 @@ uint32_t Ring_Buffer_Find_Byte(ring_buffer *ring_buffer_handle, uint8_t find_byt
         while(distance < lenght_a)
         {
             //在区域1查找匹配的字符
-            if(*(ring_buffer_handle->array_addr + ring_buffer_handle->head + distance) != find_byte)
+            uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
+            if(*(head_addr + distance) != find_byte)
                 distance ++ ;
             else return distance + 1 ;
         }
         while(distance < ring_buffer_handle->lenght)
         {
             //在区域2查找匹配的字符
-            if(*(ring_buffer_handle->array_addr + distance - lenght_a ) != find_byte)
+            uint8_t *head_addr = ring_buffer_handle->array_addr - lenght_a ;
+            if(*(head_addr + distance) != find_byte)
                 distance ++ ;
             else return distance + 1 ;
         }
@@ -228,7 +233,8 @@ uint32_t Ring_Buffer_Find_Byte(ring_buffer *ring_buffer_handle, uint8_t find_byt
         while(distance < lenght_a)
         {
             //在区域1查找匹配的字符
-            if(*(ring_buffer_handle->array_addr + ring_buffer_handle->head + distance) != find_byte)
+            uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
+            if(*(head_addr + distance) != find_byte)
                 distance ++ ;
             else return distance + 1 ;
         }

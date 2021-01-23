@@ -3,7 +3,7 @@
  * \brief 简易环形缓冲相关定义与声明
  * \author netube_99\netube@163.com
  * \date 2021.01.23
- * \version V1.1
+ * \version V1.1.0
 */
 
 #ifndef _RING_BUFFER_H_

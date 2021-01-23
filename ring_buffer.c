@@ -210,18 +210,18 @@ uint32_t Ring_Buffer_Find_Byte(ring_buffer *ring_buffer_handle, uint8_t find_byt
     }
     if(lenght_b != 0)//需要查找两个区域
     {
+        uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
         while(distance < lenght_a)
         {
             //在区域1查找匹配的字符
-            uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
             if(*(head_addr + distance) != find_byte)
                 distance ++ ;
             else return distance + 1 ;
         }
+        head_addr = ring_buffer_handle->array_addr - lenght_a ;
         while(distance < ring_buffer_handle->lenght)
         {
             //在区域2查找匹配的字符
-            uint8_t *head_addr = ring_buffer_handle->array_addr - lenght_a ;
             if(*(head_addr + distance) != find_byte)
                 distance ++ ;
             else return distance + 1 ;
@@ -230,10 +230,10 @@ uint32_t Ring_Buffer_Find_Byte(ring_buffer *ring_buffer_handle, uint8_t find_byt
     }
     else
     {
+        uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
         while(distance < lenght_a)
         {
             //在区域1查找匹配的字符
-            uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
             if(*(head_addr + distance) != find_byte)
                 distance ++ ;
             else return distance + 1 ;

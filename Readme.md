@@ -32,9 +32,11 @@ int main()
     Ring_Buffer_Write_String(&RB, "hello world", 11);
     Ring_Buffer_Write_Byte(&RB, '!');
 
-    //读出环形缓冲区中的数据并打印
+    //查找匹配字符、读出环形缓冲区中的数据并打印
+    uint32_t num = Ring_Buffer_Find_Byte(&RB, '!');
     uint8_t get[16] ;
-    Ring_Buffer_Read_String(&RB, get, 12);
+    Ring_Buffer_Read_String(&RB, get, num);
     printf("%s", get);
 }
 ```
+

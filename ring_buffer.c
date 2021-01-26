@@ -11,7 +11,7 @@
  * 
  * 2021.01.19 V1.0.0 发布第一版本
  * 2021.01.24 V1.1.0 增加匹配字符查找函数
- * 2021.01.27 V1.2.0 重制匹配查找功能，现已支持8位到32位关键字查询
+ * 2021.01.27 V1.2.0 重制匹配字符查找功能，现已支持8位到32位关键字查询
 */
 
 #include "ring_buffer.h"
@@ -195,22 +195,20 @@ uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output
 */
 uint32_t Ring_Buffer_Find_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyword, uint8_t keyword_lenght)
 {
-    //计算需要搜索的最大长度
-    uint32_t max_find_lenght = ring_buffer_handle->lenght - keyword_lenght + 1 ;
+    uint32_t max_find_lenght = ring_buffer_handle->lenght - keyword_lenght + 1 ;//计算需要搜索的最大长度
     uint8_t trigger_word = keyword >> ((keyword_lenght - 1) * 8) ;//计算触发关键词检查的字节（最高位）
-    uint32_t distance = 1 , find_head = ring_buffer_handle->head;
-    while(distance <= max_find_lenght)
+    uint32_t distance = 1 , find_head = ring_buffer_handle->head;//记录关键词距离头指针的长度/临时头指针获取原头指针初始值
+    while(distance <= max_find_lenght)//在设定范围内搜索关键字（防止指针越位错误）
     {
-        //如果高位字节匹配则开始向低位检查
-        if(*(ring_buffer_handle->array_addr + find_head) == trigger_word)
-            if(Ring_Buffer_Get_Word(ring_buffer_handle, find_head, keyword_lenght) == keyword)
-                return distance ;
-        find_head ++ ;
-        distance ++ ;
+        if(*(ring_buffer_handle->array_addr + find_head) == trigger_word)//如果高位字节匹配则开始向低位检查
+            if(Ring_Buffer_Get_Word(ring_buffer_handle, find_head, keyword_lenght) == keyword)//满足关键字匹配
+                return distance ;//返回长度，使用 Ring_Buffer_Read_String 可提取数据
+        find_head ++ ;//当前字符不匹配，临时头指针后移，检查下一个
+        distance ++ ;//长度也要随着搜索进度后移
         if(find_head > (ring_buffer_handle->max_lenght - 1))
-            find_head = 0 ;
+            find_head = 0 ;//如果到了数组尾部，则返回数组开头（环形缓冲的特性）
     }
-    return RING_BUFFER_ERROR ;
+    return RING_BUFFER_ERROR ;//咩都某搵到！点算啊？
 }
 
 /**
@@ -223,14 +221,15 @@ uint32_t Ring_Buffer_Find_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyw
 static uint32_t Ring_Buffer_Get_Word(ring_buffer *ring_buffer_handle, uint32_t head, uint32_t read_lenght)
 {
     uint32_t data = 0, i ;
-    for(i=1; i<=read_lenght; i++)
+    for(i=1; i<=read_lenght; i++)//按照关键字的长度（字符数）向后提取数据
     {
+        //从最高位到最低位，整合成一个32位数据
         data |= *(ring_buffer_handle->array_addr + head) << (8*(read_lenght - i)) ;
         head ++ ;
         if(head > (ring_buffer_handle->max_lenght - 1))
-            head = 0 ;
+            head = 0 ;//如果到了数组尾部，则返回数组开头（环形缓冲的特性）
     }
-    return data ;
+    return data ;//返回移位整合后的32位数据
 }
 
 /**

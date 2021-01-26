@@ -15,7 +15,7 @@
 #define RING_BUFFER_SUCCESS     0x01
 #define RING_BUFFER_ERROR       0x00
 
-//定义一个环形缓冲区结构体
+//环形缓冲区结构体
 typedef struct
 {
     uint32_t head ;//操作头指针
@@ -29,13 +29,11 @@ uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,
 void Ring_Buffer_Reset(ring_buffer *ring_buffer_handle);//清空缓冲区里的数据
 uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data);//向缓冲区里写一个字节
 uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle);//从缓冲区读取一个字节
-uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_addr, uint32_t write_lenght);//向缓冲区里写一段数据
-uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr, uint32_t read_lenght);//从缓冲区读取一段数据
+uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_addr, uint32_t write_lenght);//向缓冲区里写指定长度数据
+uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr, uint32_t read_lenght);//从缓冲区读取指定长度数据
 uint32_t Ring_Buffer_Find_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyword, uint8_t keyword_lenght);//从头指针开始查找最近的匹配字符
-static uint32_t Ring_Buffer_Get_Word(ring_buffer *ring_buffer_handle, uint32_t head, uint32_t read_lenght);
+static uint32_t Ring_Buffer_Get_Word(ring_buffer *ring_buffer_handle, uint32_t head, uint32_t read_lenght);//从指定头指针地址获取完整长度的关键字（私有函数，无指针越位保护）
 uint32_t Ring_Buffer_Get_Lenght(ring_buffer *ring_buffer_handle);//获取缓冲区里已储存的数据长度
 uint32_t Ring_Buffer_Get_FreeSize(ring_buffer *ring_buffer_handle);//获取缓冲区可用储存空间
-
-void Ring_Buffer_Test(void);
 
 #endif

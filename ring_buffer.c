@@ -6,11 +6,12 @@
  * 无需手动清空数据缓存区，只要将上次接收的数据读取出来，缓冲区即可准备好接收下一段数据；
  * 节省了手动清空普通缓存区的时间，能够提升串口程序的运行效率；
  * \author netube_99\netube@163.com
- * \date 2021.01.23
- * \version V1.1.0
+ * \date 2021.01.26
+ * \version V1.2.0
  * 
  * 2021.01.19 V1.0.0 发布第一版本
  * 2021.01.24 V1.1.0 增加匹配字符查找函数
+ * 2021.01.27 V1.2.0 重制匹配查找功能，现已支持8位到32位关键字查询
 */
 
 #include "ring_buffer.h"
@@ -75,7 +76,7 @@ uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data)
 }
 
 /**
- * \brief 从缓冲区头部读取一个字节
+ * \brief 从缓冲区头指针读取一个字节
  * \param[in] ring_buffer_handle: 缓冲区结构体句柄
  * \return 返回读取的字节
 */
@@ -97,7 +98,7 @@ uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle)
 /**
  * \brief 向缓冲区尾部写指定长度的数据
  * \param[out] ring_buffer_handle: 缓冲区结构体句柄
- * \param[out] input_addr: 待写入数组基地址
+ * \param[out] input_addr: 待写入数据的基地址
  * \param[in] write_lenght: 要写入的字节数
  * \return 返回缓冲区尾部写指定长度字节的结果
  *      \arg RING_BUFFER_SUCCESS: 写入成功
@@ -116,7 +117,7 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_ad
         if((ring_buffer_handle->max_lenght - ring_buffer_handle->tail) < write_lenght)
         {
             write_size_a = ring_buffer_handle->max_lenght - ring_buffer_handle->tail ;//从尾指针开始写到储存数组末尾
-            write_size_b = write_lenght - (ring_buffer_handle->max_lenght - ring_buffer_handle->tail) ;//从储存数组开头写数据
+            write_size_b = write_lenght - write_size_a ;//从储存数组开头写数据
         }
         else//如果顺序可用长度大于需写入的长度，则只需要写入一次
         {
@@ -161,7 +162,7 @@ uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output
         if(read_lenght > (ring_buffer_handle->max_lenght - ring_buffer_handle->head))
         {
             Read_size_a = ring_buffer_handle->max_lenght - ring_buffer_handle->head ;
-            Read_size_b = read_lenght - (ring_buffer_handle->max_lenght - ring_buffer_handle->head) ;
+            Read_size_b = read_lenght - Read_size_a ;
         }
         else
         {
@@ -186,60 +187,50 @@ uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output
 }
 
 /**
- * \brief 从头指针开始查找最近的匹配字符
+ * \brief 从头指针开始查找最近的匹配关键字
  * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \param[in] find_byte: 要查找的字符
- * \return 返回字符查找的结果
- *      \arg >0: 若要获取到匹配字符则需要读取的数据量
- *      \arg RING_BUFFER_ERROR: 查找失败
+ * \param[in] keyword: 要查找的关键字
+ * \param[in] keyword_lenght:关键字字节数，最大4字节（32位）
+ * \return 返回获取匹配字符最高位需要读取的字节数，返回 0/RING_BUFFER_ERROR: 则查找失败
 */
-uint32_t Ring_Buffer_Find_Byte(ring_buffer *ring_buffer_handle, uint8_t find_byte)
+uint32_t Ring_Buffer_Find_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyword, uint8_t keyword_lenght)
 {
-    uint32_t distance = 0 ;
-    uint32_t lenght_a, lenght_b ;
-    //如果有效数据已在数组中头尾相连
-    if((ring_buffer_handle->lenght) > (ring_buffer_handle->max_lenght - ring_buffer_handle->head))
+    //计算需要搜索的最大长度
+    uint32_t max_find_lenght = ring_buffer_handle->lenght - keyword_lenght + 1 ;
+    uint8_t trigger_word = keyword >> ((keyword_lenght - 1) * 8) ;//计算触发关键词检查的字节（最高位）
+    uint32_t distance = 1 , find_head = ring_buffer_handle->head;
+    while(distance <= max_find_lenght)
     {
-        lenght_a = ring_buffer_handle->max_lenght - ring_buffer_handle->head ;
-        lenght_b = ring_buffer_handle->lenght - lenght_a ;
+        //如果高位字节匹配则开始向低位检查
+        if(*(ring_buffer_handle->array_addr + find_head) == trigger_word)
+            if(Ring_Buffer_Get_Word(ring_buffer_handle, find_head, keyword_lenght) == keyword)
+                return distance ;
+        find_head ++ ;
+        distance ++ ;
+        if(find_head > (ring_buffer_handle->max_lenght - 1))
+            find_head = 0 ;
     }
-    else
+    return RING_BUFFER_ERROR ;
+}
+
+/**
+ * \brief 从指定头指针地址获取完整长度的关键字（私有函数，无指针越位保护）
+ * \param[in] ring_buffer_handle: 缓冲区结构体句柄
+ * \param[in] head: 头指针偏移量（匹配字符所在地址）
+ * \param[in] read_lenght:关键字字节数，最大4字节（32位）
+ * \return 返回完整的关键字
+*/
+static uint32_t Ring_Buffer_Get_Word(ring_buffer *ring_buffer_handle, uint32_t head, uint32_t read_lenght)
+{
+    uint32_t data = 0, i ;
+    for(i=1; i<=read_lenght; i++)
     {
-        lenght_a = ring_buffer_handle->lenght ;
-        lenght_b = 0 ;
+        data |= *(ring_buffer_handle->array_addr + head) << (8*(read_lenght - i)) ;
+        head ++ ;
+        if(head > (ring_buffer_handle->max_lenght - 1))
+            head = 0 ;
     }
-    if(lenght_b != 0)//需要查找两个区域
-    {
-        uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
-        while(distance < lenght_a)
-        {
-            //在区域1查找匹配的字符
-            if(*(head_addr + distance) != find_byte)
-                distance ++ ;
-            else return distance + 1 ;
-        }
-        head_addr = ring_buffer_handle->array_addr - lenght_a ;
-        while(distance < ring_buffer_handle->lenght)
-        {
-            //在区域2查找匹配的字符
-            if(*(head_addr + distance) != find_byte)
-                distance ++ ;
-            else return distance + 1 ;
-        }
-        return RING_BUFFER_ERROR ;//查找失败，返回 RING_BUFFER_ERROR
-    }
-    else
-    {
-        uint8_t *head_addr = ring_buffer_handle->array_addr + ring_buffer_handle->head ;
-        while(distance < lenght_a)
-        {
-            //在区域1查找匹配的字符
-            if(*(head_addr + distance) != find_byte)
-                distance ++ ;
-            else return distance + 1 ;
-        }
-        return RING_BUFFER_ERROR ;
-    }
+    return data ;
 }
 
 /**
@@ -257,7 +248,7 @@ uint32_t Ring_Buffer_Get_Lenght(ring_buffer *ring_buffer_handle)
  * \param[in] ring_buffer_handle: 缓冲区结构体句柄
  * \return 返回缓冲区可用储存空间
 */
-uint32_t Ring_Buffer_Get_Free_Size(ring_buffer *ring_buffer_handle)
+uint32_t Ring_Buffer_Get_FreeSize(ring_buffer *ring_buffer_handle)
 {
     return (ring_buffer_handle->max_lenght - ring_buffer_handle->lenght) ;
 }

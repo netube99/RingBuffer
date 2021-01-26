@@ -33,10 +33,13 @@ int main()
     Ring_Buffer_Write_Byte(&RB, '!');
 
     //查找匹配字符、读出环形缓冲区中的数据并打印
-    uint32_t num = Ring_Buffer_Find_Byte(&RB, '!');
+    uint32_t num = Ring_Buffer_Find_Keyword(&RB, '!', 1);
     uint8_t get[16] ;
     Ring_Buffer_Read_String(&RB, get, num);
     printf("%s", get);
 }
 ```
-
+## 更新日志
+2021.01.19 V1.0.0 发布第一版本
+2021.01.24 V1.1.0 增加匹配字符查找函数
+2021.01.27 V1.2.0 重制匹配字符查找功能，现已支持8位到32位关键字查询

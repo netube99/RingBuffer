@@ -2,8 +2,8 @@
  * \file ring_buffer.h
  * \brief 简易环形缓冲相关定义与声明
  * \author netube_99\netube@163.com
- * \date 2021.01.26
- * \version V1.2.0
+ * \date 2021.01.27
+ * \version v1.1.0
 */
 
 #ifndef _RING_BUFFER_H_
@@ -26,13 +26,14 @@ typedef struct
 }ring_buffer;
 
 uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,uint32_t buffer_size);//初始化新缓冲区
-void Ring_Buffer_Reset(ring_buffer *ring_buffer_handle);//清空缓冲区里的数据
+uint8_t Ring_Buffer_Delete(ring_buffer *ring_buffer_handle, uint8_t lenght);//从头指针开始删除指定长度的数据
 uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data);//向缓冲区里写一个字节
 uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle);//从缓冲区读取一个字节
 uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_addr, uint32_t write_lenght);//向缓冲区里写指定长度数据
 uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr, uint32_t read_lenght);//从缓冲区读取指定长度数据
+uint8_t Ring_Buffer_Insert_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyword, uint8_t keyword_lenght);//环形缓冲区插入关键词
 uint32_t Ring_Buffer_Find_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyword, uint8_t keyword_lenght);//从头指针开始查找最近的匹配字符
-static uint32_t Ring_Buffer_Get_Word(ring_buffer *ring_buffer_handle, uint32_t head, uint32_t read_lenght);//从指定头指针地址获取完整长度的关键字（私有函数，无指针越位保护）
+static uint32_t Ring_Buffer_Get_Word(ring_buffer *ring_buffer_handle, uint32_t head, uint32_t read_lenght);//从指定头指针地址获取完整长度的关键词（私有函数，无指针越位保护）
 uint32_t Ring_Buffer_Get_Lenght(ring_buffer *ring_buffer_handle);//获取缓冲区里已储存的数据长度
 uint32_t Ring_Buffer_Get_FreeSize(ring_buffer *ring_buffer_handle);//获取缓冲区可用储存空间
 

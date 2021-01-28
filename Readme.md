@@ -13,6 +13,10 @@ Ring Buffer 适用于单片机串口收发等应用场景，与普通的数组�
 5. 这时候我们就可以使用库提供的各种函数对新建的缓冲区进行读写等操作；
 
 ## 示例代码
+展示了环形缓冲区实例化的过程和几个核心功能的使用方法，仅用于参考，并未将所有的函数都在示例中展示出来，函数详细内容请在编程的过程中参考ring_buffer.c内的注释；如果您在使用本库的过程中发现异常或确定BUG，请及时[Github](https://github.com/netube99/RingBuffer)向我反馈，谢谢；
+
+**基础用法：**
+
 ```c
 #include <stdio.h>
 #include <ring_buffer.h>
@@ -32,11 +36,65 @@ int main()
     Ring_Buffer_Write_String(&RB, "hello world", 11);
     Ring_Buffer_Write_Byte(&RB, '!');
 
-    //查找匹配字符、读出环形缓冲区中的数据并打印
-    uint32_t num = Ring_Buffer_Find_Keyword(&RB, '!', 1);
+    //获取已储存的数据长度，读出环形缓冲区中的数据并打印
+    uint32_t num = Ring_Buffer_Get_Lenght(&RB);
     uint8_t get[16] ;
     Ring_Buffer_Read_String(&RB, get, num);
     printf("%s", get);
+    
+    return 0 ;
+}
+```
+
+**可用于串口收发的用法：**
+
+```c
+#include <stdio.h>
+#include <ring_buffer.h>
+
+#define Read_BUFFER_SIZE	256
+
+//设定一个分隔关键词和关键词的长度（字节）
+#define SEPARATE_SIGN       0xCCFB22AA
+#define SEPARATE_SIGN_SIZE  4
+
+int main()
+{
+    //新建缓冲区数组与Ring Buff操作句柄
+    uint8_t buffer[Read_BUFFER_SIZE] ;
+    ring_buffer RB ;
+
+    //初始化Ring Buff操作句柄，绑定缓冲区数组；
+    Ring_Buffer_Init(&RB, buffer, Read_BUFFER_SIZE);
+
+    //记录段落数量
+    uint8_t String_Count = 0 ;
+
+    //向环形缓冲区写入三段数据，每段之间插入一个分隔关键词
+    Ring_Buffer_Write_String(&RB, "ABCDEFGHIJK\r\n", 13);//写入一段数据
+    Ring_Buffer_Insert_Keyword(&RB, SEPARATE_SIGN, SEPARATE_SIGN_SIZE);//插入一个分隔关键词
+    String_Count ++ ;//记录段落数量 +1
+
+    Ring_Buffer_Write_String(&RB, "abcdefg\r\n", 9);
+    Ring_Buffer_Insert_Keyword(&RB, SEPARATE_SIGN, SEPARATE_SIGN_SIZE);
+    String_Count ++ ;
+
+    Ring_Buffer_Write_String(&RB, "1234\r\n", 6);
+    Ring_Buffer_Insert_Keyword(&RB, SEPARATE_SIGN, SEPARATE_SIGN_SIZE);
+    String_Count ++ ;
+
+    while(String_Count != 0)
+    {
+        uint8_t get[16] ;
+        //获得头指针到关键词高位的距离，距离-1得到第一段数据的长度
+        uint8_t lenght = Ring_Buffer_Find_Keyword(&RB, SEPARATE_SIGN, SEPARATE_SIGN_SIZE) - 1 ;
+        Ring_Buffer_Read_String(&RB, get, lenght);//读取一段数据，保存到get数组
+        printf("%s", get);//打印数据
+        Ring_Buffer_Delete(&RB, SEPARATE_SIGN_SIZE);//删除分隔关键词的长度的数据，即删除关键词
+        String_Count -- ;//记录段落数量 -1
+    }
+
+    return 0 ;
 }
 ```
 ## 更新日志

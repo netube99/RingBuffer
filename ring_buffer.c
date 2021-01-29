@@ -6,13 +6,14 @@
  * 无需手动清空数据缓存区，只要将上次接收的数据读取出来，缓冲区即可准备好接收下一段数据；
  * 节省了手动清空普通缓存区的时间，能够提升串口程序的运行效率；
  * \author netube_99\netube@163.com
- * \date 2021.01.28
- * \version v1.3.0
+ * \date 2021.01.30
+ * \version v1.3.1
  * 
  * 2021.01.19 v1.0.0 发布第一版本
  * 2021.01.24 v1.1.0 增加匹配字符查找函数
  * 2021.01.27 v1.2.0 重制匹配字符查找功能，现已支持8位到32位关键词查询
  * 2021.01.28 v1.3.0 复位函数修改为删除函数、增加关键词插入函数（自适应大小端）
+ * 2021.01.30 v1.3.1 修复了Ring_Buffer_Write_String函数的小概率指针溢出错误
 */
 
 #include "ring_buffer.h"
@@ -131,7 +132,7 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_ad
             write_size_a = ring_buffer_handle->max_lenght - ring_buffer_handle->tail ;//从尾指针开始写到储存数组末尾
             write_size_b = write_lenght - write_size_a ;//从储存数组开头写数据
         }
-        else//如果顺序可用长度大于需写入的长度，则只需要写入一次
+        else//如果顺序可用长度大于或等于需写入的长度，则只需要写入一次
         {
             write_size_a = write_lenght ;//从尾指针开始写到储存数组末尾
             write_size_b = 0 ;//无需从储存数组开头写数据
@@ -150,6 +151,8 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_ad
             memcpy(ring_buffer_handle->array_addr + ring_buffer_handle->tail, input_addr, write_size_a);
             ring_buffer_handle->lenght += write_lenght ;//记录新存储了多少数据量
             ring_buffer_handle->tail += write_size_a ;//重新定位尾指针位置
+            if(ring_buffer_handle->tail == ring_buffer_handle->max_lenght)
+                ring_buffer_handle->tail = 0 ;//如果写入的数据后尾指针刚好写到数组尾部，则回到开头，防止越位
         }
         return RING_BUFFER_SUCCESS ;
     }

@@ -2,8 +2,8 @@
  * \file ring_buffer.h
  * \brief 简易环形缓冲相关定义与声明
  * \author netube_99\netube@163.com
- * \date 2021.01.28
- * \version v1.3.0
+ * \date 2021.01.30
+ * \version v1.3.1
 */
 
 #ifndef _RING_BUFFER_H_

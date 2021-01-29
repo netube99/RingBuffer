@@ -13,7 +13,7 @@
  * 2021.01.24 v1.1.0 增加匹配字符查找函数
  * 2021.01.27 v1.2.0 重制匹配字符查找功能，现已支持8位到32位关键词查询
  * 2021.01.28 v1.3.0 复位函数修改为删除函数、增加关键词插入函数（自适应大小端）
- * 2021.01.30 v1.3.1 修复了Ring_Buffer_Write_String函数的小概率指针溢出错误
+ * 2021.01.30 v1.3.1 修复了String读写函数的小概率指针溢出错误
 */
 
 #include "ring_buffer.h"
@@ -152,7 +152,7 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_ad
             ring_buffer_handle->lenght += write_lenght ;//记录新存储了多少数据量
             ring_buffer_handle->tail += write_size_a ;//重新定位尾指针位置
             if(ring_buffer_handle->tail == ring_buffer_handle->max_lenght)
-                ring_buffer_handle->tail = 0 ;//如果写入的数据后尾指针刚好写到数组尾部，则回到开头，防止越位
+                ring_buffer_handle->tail = 0 ;//如果写入数据后尾指针刚好写到数组尾部，则回到开头，防止越位
         }
         return RING_BUFFER_SUCCESS ;
     }
@@ -196,6 +196,8 @@ uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output
             memcpy(output_addr, ring_buffer_handle->array_addr + ring_buffer_handle->head, Read_size_a);
             ring_buffer_handle->lenght -= read_lenght ;//记录剩余数据量
             ring_buffer_handle->head += Read_size_a ;//重新定位头指针位置
+            if(ring_buffer_handle->head == ring_buffer_handle->max_lenght)
+                ring_buffer_handle->head = 0 ;//如果读取数据后头指针刚好写到数组尾部，则回到开头，防止越位
         }
         return RING_BUFFER_SUCCESS ;
     }

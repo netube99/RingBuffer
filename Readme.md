@@ -18,9 +18,9 @@ Ring Buffer 是一个基于C语言开发的轻量级环形缓冲区，适用于�
 6. 函数详细内容请在编程的过程中参考ring_buffer.c内的注释；
 
 ## 示例
+在这里我展示了如何新建并初始化Ring Buffer、读写环形缓冲、查询数据长度等基础操作；您可以了解到Ring Buffer的函数命名与参数的风格和基本的使用方法
+
 ```c
-//在这里我展示了如何新建并初始化Ring Buffer、读写环形缓冲、查询数据长度等基础操作
-//您可以了解到Ring Buffer的函数命名与参数的风格和基本的使用方法
 #include <stdio.h>
 #include <ring_buffer.h>
 
@@ -31,14 +31,14 @@ int main()
     //新建缓冲区数组与Ring Buff操作句柄
     uint8_t buffer[Read_BUFFER_SIZE] ;
     ring_buffer RB ;
-
+    
     //初始化Ring Buff操作句柄，绑定缓冲区数组；
     Ring_Buffer_Init(&RB, buffer, Read_BUFFER_SIZE);
-
+    
     //向环形缓冲区写入一段字节和一个字节
     Ring_Buffer_Write_String(&RB, "hello world", 11);
     Ring_Buffer_Write_Byte(&RB, '!');
-
+    
     //获取已储存的数据长度，读出环形缓冲区中的数据并打印
     uint32_t num = Ring_Buffer_Get_Lenght(&RB);
     uint8_t get[16] ;
@@ -48,9 +48,9 @@ int main()
     return 0 ;
 }
 ```
+除了基本的读写操作之外，为了更好的利用环形这一特点，我加入了分隔关键词、查询关键词、删除数据等功能，基于这些功能您可以在串口收发中实现多段数据的缓存与准确读取；降低了实时性响应的要求、提升了串口收发的性能
+
 ```c
-//除了基本的读写操作之外，为了更好的利用环形这一特点，我加入了分隔关键词、查询关键词、删除数据等功能
-//基于这些功能您可以在串口收发中实现多段数据的缓存与准确读取；降低了实时性响应的要求、提升了串口收发的性能
 #include <stdio.h>
 #include <ring_buffer.h>
 

@@ -1,14 +1,12 @@
 # RingBuffer 轻量级环形缓冲区
-[![GitHub license](https://img.shields.io/github/license/netube99/RingBuffer?color=green)](https://github.com/netube99/RingBuffer/blob/main/LICENSE) [![GitHub license](https://img.shields.io/badge/make%20with-C-red)](https://github.com/netube99/RingBuffer/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/netube99/RingBuffer?color=green)](https://github.com/netube99/RingBuffer/blob/main/LICENSE) [![Language](https://img.shields.io/badge/make%20with-C-red)]() [![GitHub repository](https://img.shields.io/badge/github-RingBuffer-blue)](https://github.com/netube99/RingBuffer)
 
 ## 简介
 RingBuffer 是一个基于C语言开发的轻量级环形缓冲区，适用于各嵌入式平台的串口收发等应用场景；
 
 相较于普通的收发缓冲数组，环形缓冲区的操作更加简单，性能更加强大；使用 RingBuffer 提供的函数，可以轻松实现数据的读写、查询、删除等操作，不需要编写复杂的地址记录、读写计数等代码，减少了数据指针溢出、数据被覆盖的风险；同时 RingBuffer 还提供了可自定义分隔关键字的插入、查找等功能，运用在嵌入式的串口收发中可以实现多段数据的储存，段落之间分隔独立，读写缓冲区不再受到硬件时序的阻塞，降低串口对芯片实时响应的要求并提升了数据传输的可靠性；
 
-代码已在GD32F130C8T6平台上通过编译，已进行过大量数据的串口收发压力测试，暂未发现显性BUG；
-
-本项目开源地址：[Github](https://github.com/netube99/RingBuffer)
+代码已在GD32F130C8T6平台上通过编译，已进行过大量数据的串口收发压力测试，暂未发现显性BUG。
 
 ## 开始
 1. 复制库文件至工程中，在源代码中引用 RingBuffer 头文件；

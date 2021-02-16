@@ -1,4 +1,4 @@
-<h1 align="center">RingBuffer 轻量级环形缓冲区</h1>
+<p align="center"><h1 align="center">RingBuffer 轻量级环形缓冲区</h1></p>
 <p align="center">
 <img src="https://img.shields.io/github/license/netube99/RingBuffer?color=green&style=for-the-badge"/>
 <img src="https://img.shields.io/badge/MADE%20WITH-C-red?style=for-the-badge"/>

@@ -1,10 +1,5 @@
-<p align="center"><h1 align="center">RingBuffer 轻量级环形缓冲区</h1></p>
-<p align="center">
-<img src="https://img.shields.io/github/license/netube99/RingBuffer?color=green&style=for-the-badge"/>
-<img src="https://img.shields.io/badge/MADE%20WITH-C-red?style=for-the-badge"/>
-<img src="https://img.shields.io/github/stars/netube99/RingBuffer?color=blue&style=for-the-badge"/>
-<img src="https://img.shields.io/github/forks/netube99/RingBuffer?color=blue&style=for-the-badge"/>
-</p>
+# RingBuffer 轻量级环形缓冲区
+[![GitHub license](https://img.shields.io/github/license/netube99/RingBuffer?color=green&style=for-the-badge)](https://github.com/netube99/RingBuffer/blob/main/LICENSE) [![GitHub license](https://img.shields.io/badge/MADE%20WITH-C-red?style=for-the-badge)](https://github.com/netube99/RingBuffer/blob/main/LICENSE) [![GitHub license](https://img.shields.io/github/stars/netube99/RingBuffer?color=blue&style=for-the-badge)](https://github.com/netube99/RingBuffer/blob/main/LICENSE) [![GitHub license](	https://img.shields.io/github/forks/netube99/RingBuffer?color=blue&style=for-the-badge)](https://github.com/netube99/RingBuffer/blob/main/LICENSE)
 
 ## 简介
 RingBuffer 是一个基于C语言开发的轻量级环形缓冲区，适用于各嵌入式平台的串口收发等应用场景；

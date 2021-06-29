@@ -6,14 +6,16 @@
  * 无需手动清空数据缓存区，只要将上次接收的数据读取出来，缓冲区即可准备好接收下一段数据；
  * 节省了手动清空普通缓存区的时间，能够提升串口程序的运行效率；
  * \author netube_99\netube@163.com
- * \date 2021.01.30
- * \version v1.3.1
+ * \date 2021.06.29
+ * \version v1.3.2
  * 
  * 2021.01.19 v1.0.0 发布第一版本
  * 2021.01.24 v1.1.0 增加匹配字符查找函数
  * 2021.01.27 v1.2.0 重制匹配字符查找功能，现已支持8位到32位关键词查询
  * 2021.01.28 v1.3.0 复位函数修改为删除函数、增加关键词插入函数（自适应大小端）
  * 2021.01.30 v1.3.1 修复了String读写函数的小概率指针溢出错误
+ * 2021.06.29 v1.3.2 修复了 Ring_Buffer_Write_String 的参数类型错误
+                    修复了 Ring_Buffer_Write_Byte 无法写数组最后一位的问题
 */
 
 #include "ring_buffer.h"
@@ -74,7 +76,7 @@ uint8_t Ring_Buffer_Delete(ring_buffer *ring_buffer_handle, uint8_t lenght)
 uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data)
 {
     //缓冲区数组已满，产生覆盖错误
-    if(ring_buffer_handle->lenght == (ring_buffer_handle->max_lenght - 1))
+    if(ring_buffer_handle->lenght == (ring_buffer_handle->max_lenght))
         return RING_BUFFER_ERROR ;
     else
     {
@@ -117,7 +119,7 @@ uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle)
  *      \arg RING_BUFFER_SUCCESS: 写入成功
  *      \arg RING_BUFFER_ERROR: 写入失败
 */
-uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_addr, uint32_t write_lenght)
+uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, uint8_t *input_addr, uint32_t write_lenght)
 {
     //如果不够存储空间存放新数据,返回错误
     if((ring_buffer_handle->lenght + write_lenght) > (ring_buffer_handle->max_lenght))
@@ -142,7 +144,7 @@ uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, void *input_ad
         {
             //分别拷贝a、b段数据到储存数组中
             memcpy(ring_buffer_handle->array_addr + ring_buffer_handle->tail, input_addr, write_size_a);
-            memcpy(ring_buffer_handle->array_addr, input_addr + write_size_a , write_size_b);
+            memcpy(ring_buffer_handle->array_addr, input_addr + write_size_a, write_size_b);
             ring_buffer_handle->lenght += write_lenght ;//记录新存储了多少数据量
             ring_buffer_handle->tail = write_size_b ;//重新定位尾指针位置
         }

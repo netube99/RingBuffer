@@ -18,11 +18,11 @@
 //环形缓冲区结构体
 typedef struct
 {
-    uint32_t head ;//操作头指针
-    uint32_t tail ;//操作尾指针
-    uint32_t lenght ;//已储存的数据量
+    uint32_t head ;//操作头指针偏移量
+    uint32_t tail ;//操作尾指针偏移量
+    uint32_t lenght ;//已储存的数据长度
     uint8_t *array_addr ;//缓冲区储存数组基地址
-    uint32_t max_lenght ;//缓冲区最大可储存数据量
+    uint32_t max_lenght ;//缓冲区最大可储存数据长度
 }ring_buffer;
 
 uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,uint32_t buffer_size);//初始化新缓冲区

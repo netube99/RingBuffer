@@ -21,30 +21,31 @@ RingBuffer 是一个基于C语言开发的轻量级环形缓冲区，适用于�
 
 ```c
 #include <stdio.h>
-#include <ring_buffer.h>
+#include <stdint.h>
+#include "ring_buffer.h"
 
 #define Read_BUFFER_SIZE	256
 
 int main()
 {
     //新建缓冲区数组与RingBuffer操作句柄
-    uint8_t buffer[Read_BUFFER_SIZE] ;
-    ring_buffer RB ;
-    
+    uint8_t buffer[Read_BUFFER_SIZE] = {0};
+    ring_buffer RB;
+
     //初始化RingBuffer操作句柄，绑定缓冲区数组；
     Ring_Buffer_Init(&RB, buffer, Read_BUFFER_SIZE);
-    
+
     //向环形缓冲区写入一段字节和一个字节
     Ring_Buffer_Write_String(&RB, "hello world", 11);
     Ring_Buffer_Write_Byte(&RB, '!');
-    
+
     //获取已储存的数据长度，读出环形缓冲区中的数据并打印
     uint32_t num = Ring_Buffer_Get_Lenght(&RB);
-    uint8_t get[16] ;
+    uint8_t get[16] = {0};
     Ring_Buffer_Read_String(&RB, get, num);
     printf("%s", get);
-    
-    return 0 ;
+
+    return 0;
 }
 ```
 除了基本的读写操作之外，为了更好的利用环形这一特点，我加入了分隔关键词、查询关键词、删除数据等功能，基于这些功能您可以在串口收发中实现多段数据的缓存与准确读取；降低了实时性响应的要求、提升了串口收发的性能
@@ -62,7 +63,7 @@ int main()
 int main()
 {
     //新建缓冲区数组与RingBuffer操作句柄
-    uint8_t buffer[Read_BUFFER_SIZE] ;
+    uint8_t buffer[Read_BUFFER_SIZE] = {0};
     ring_buffer RB ;
 
     //初始化RingBuffer操作句柄，绑定缓冲区数组；
@@ -86,7 +87,7 @@ int main()
 
     while(String_Count != 0)
     {
-        uint8_t get[16] ;
+        uint8_t get[16] = {0};
         //获得头指针到关键词高位的距离，距离-1得到第一段数据的长度
         uint8_t lenght = Ring_Buffer_Find_Keyword(&RB, SEPARATE_SIGN, SEPARATE_SIGN_SIZE) - 1 ;
         Ring_Buffer_Read_String(&RB, get, lenght);//读取一段数据，保存到get数组

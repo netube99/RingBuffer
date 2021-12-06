@@ -4,7 +4,6 @@
  * \details 可作为单片机串口的环形缓冲/软FIFO，提升串口数据传输能力；
  * 可以向环形缓冲区快速的储存/读取数据，并且无需手动记录数据接收量即可准确的读出所有数据；
  * 无需手动清空数据缓存区，只要将上次接收的数据读取出来，缓冲区即可准备好接收下一段数据；
- * 节省了手动清空普通缓存区的时间，能够提升串口程序的运行效率；
  * \author netube_99\netube@163.com
  * \date 2021.06.29
  * \version v1.3.2
@@ -52,16 +51,17 @@ uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,
 */
 uint8_t Ring_Buffer_Delete(ring_buffer *ring_buffer_handle, uint8_t lenght)
 {
-    if(ring_buffer_handle->lenght < lenght)
-        return RING_BUFFER_ERROR ;//已储存的数据量小于需删除的数据量
+    if(ring_buffer_handle->lenght < lenght)//如果已储存的数据量小于需删除的数据量
+        return RING_BUFFER_ERROR ;//删除数据失败
     else
     {
+        //如果需要删除的数据量跨越了数组的头尾
         if((ring_buffer_handle->head + lenght) >= ring_buffer_handle->max_lenght)
-            ring_buffer_handle->head = lenght - (ring_buffer_handle->max_lenght - ring_buffer_handle->head);
+            ring_buffer_handle->head = lenght - (ring_buffer_handle->max_lenght - ring_buffer_handle->head);//重新计算头指针的偏移量
         else
-            ring_buffer_handle->head += lenght ;//头指针向前推进，抛弃数据
+            ring_buffer_handle->head += lenght ;//头指针从原偏移量向前推进，抛弃数据
         ring_buffer_handle->lenght -= lenght ;//重新记录有效数据长度
-        return RING_BUFFER_SUCCESS ;//已储存的数据量小于需删除的数据量
+        return RING_BUFFER_SUCCESS ;//完成删除数据的操作
     }
 }
 
@@ -75,17 +75,16 @@ uint8_t Ring_Buffer_Delete(ring_buffer *ring_buffer_handle, uint8_t lenght)
 */
 uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data)
 {
-    //缓冲区数组已满，产生覆盖错误
-    if(ring_buffer_handle->lenght == (ring_buffer_handle->max_lenght))
+    if(ring_buffer_handle->lenght >= ring_buffer_handle->max_lenght)//缓冲区数组已满，产生覆盖错误
         return RING_BUFFER_ERROR ;
     else
     {
         *(ring_buffer_handle->array_addr + ring_buffer_handle->tail) = data;//基地址+偏移量，存放数据
-        ring_buffer_handle->lenght ++ ;//数据量计数+1
-        ring_buffer_handle->tail ++ ;//尾指针后移
+        ring_buffer_handle->lenght ++ ;//已储存数据量+1
+        ring_buffer_handle->tail ++ ;//尾指针偏移量后移
     }
     //如果尾指针超越了数组末尾，尾指针指向缓冲区数组开头，形成闭环
-    if(ring_buffer_handle->tail > (ring_buffer_handle->max_lenght - 1))
+    if(ring_buffer_handle->tail >= ring_buffer_handle->max_lenght)
         ring_buffer_handle->tail = 0 ;
 	return RING_BUFFER_SUCCESS ;
 }
@@ -93,15 +92,17 @@ uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data)
 /**
  * \brief 从缓冲区头指针读取一个字节
  * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \return 返回读取的字节
+ * \return 返回缓冲区读字节的结果
+ *      \arg RING_BUFFER_SUCCESS: 读取成功
+ *      \arg RING_BUFFER_ERROR: 读取失败
 */
 uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle)
 {
     uint8_t data ;
-    if (ring_buffer_handle->lenght != 0)//有数据未读出
+    if (ring_buffer_handle->lenght != 0)//有储存的数据
     {
         data = *(ring_buffer_handle->array_addr + ring_buffer_handle->head);//读取数据
-        ring_buffer_handle->head ++ ;
+        ring_buffer_handle->head ++ ;//头指针偏移量
         ring_buffer_handle->lenght -- ;//数据量计数-1
         //如果头指针超越了数组末尾，头指针指向数组开头，形成闭环
         if(ring_buffer_handle->head > (ring_buffer_handle->max_lenght - 1))

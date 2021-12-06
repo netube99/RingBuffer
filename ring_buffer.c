@@ -92,9 +92,7 @@ uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data)
 /**
  * \brief 从缓冲区头指针读取一个字节
  * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \return 返回缓冲区读字节的结果
- *      \arg RING_BUFFER_SUCCESS: 读取成功
- *      \arg RING_BUFFER_ERROR: 读取失败
+ * \return 返回从缓冲区头指针读取得字节
 */
 uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle)
 {

@@ -15,26 +15,45 @@
 #define RING_BUFFER_SUCCESS     0x01
 #define RING_BUFFER_ERROR       0x00
 
+//使用环形缓冲区分段功能
+#define RING_BUFFER_USE_CHAPTER             1
+
+//最大分段记录量，根据具体使用情况修改
+#define RING_BUFFER_MAX_CHAPTER_NUMBER      16
+
 //环形缓冲区结构体
 typedef struct
 {
-    uint32_t head ;//操作头指针
-    uint32_t tail ;//操作尾指针
-    uint32_t lenght ;//已储存的数据量
-    uint8_t *array_addr ;//缓冲区储存数组基地址
-    uint32_t max_lenght ;//缓冲区最大可储存数据量
+    //基础功能
+    uint32_t head ;             //操作头指针
+    uint32_t tail ;             //操作尾指针
+    uint32_t Length ;           //已储存的数据量
+    uint8_t *array_addr ;       //缓冲区储存数组基地址
+    uint32_t max_Length ;       //缓冲区最大可储存数据量
+    //分段记录功能
+    #if(RING_BUFFER_USE_CHAPTER)
+    uint32_t chapter_buffer[RING_BUFFER_MAX_CHAPTER_NUMBER]; //分段长度记录
+    uint32_t chapter_standby;   //待机分段（最先输出的分段记录）的缓存下标
+    uint32_t chapter_active;    //活动分段（最后输入且未结束的分段记录）的缓存下标
+    uint32_t chapter_number;    //已记录的分段数量
+    #endif
 }ring_buffer;
 
-uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,uint32_t buffer_size);//初始化新缓冲区
-uint8_t Ring_Buffer_Delete(ring_buffer *ring_buffer_handle, uint8_t lenght);//从头指针开始删除指定长度的数据
-uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data);//向缓冲区里写一个字节
-uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle);//从缓冲区读取一个字节
-uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, uint8_t *input_addr, uint32_t write_lenght);//向缓冲区里写指定长度数据
-uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr, uint32_t read_lenght);//从缓冲区读取指定长度数据
-uint8_t Ring_Buffer_Insert_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyword, uint8_t keyword_lenght);//环形缓冲区插入关键词
-uint32_t Ring_Buffer_Find_Keyword(ring_buffer *ring_buffer_handle, uint32_t keyword, uint8_t keyword_lenght);//从头指针开始查找最近的匹配字符
-static uint32_t Ring_Buffer_Get_Word(ring_buffer *ring_buffer_handle, uint32_t head, uint32_t read_lenght);//从指定头指针地址获取完整长度的关键词（私有函数，无指针越位保护）
-uint32_t Ring_Buffer_Get_Lenght(ring_buffer *ring_buffer_handle);//获取缓冲区里已储存的数据长度
-uint32_t Ring_Buffer_Get_FreeSize(ring_buffer *ring_buffer_handle);//获取缓冲区可用储存空间
+//基础功能
+uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,uint32_t buffer_size);              //初始化新缓冲区
+uint8_t Ring_Buffer_Delete(ring_buffer *ring_buffer_handle, uint32_t Length);                                       //从头指针开始删除指定长度的数据
+uint8_t Ring_Buffer_Write_Byte(ring_buffer *ring_buffer_handle, uint8_t data);                                      //向缓冲区里写一个字节
+uint8_t Ring_Buffer_Read_Byte(ring_buffer *ring_buffer_handle, uint8_t *output_addr);                               //从缓冲区读取一个字节
+uint8_t Ring_Buffer_Write_String(ring_buffer *ring_buffer_handle, uint8_t *input_addr, uint32_t write_Length);      //向缓冲区里写指定长度数据
+uint8_t Ring_Buffer_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr, uint32_t read_Length);       //从缓冲区读取指定长度数据
+uint32_t Ring_Buffer_Get_Length(ring_buffer *ring_buffer_handle);                                                   //获取缓冲区里已储存的数据长度
+uint32_t Ring_Buffer_Get_FreeSize(ring_buffer *ring_buffer_handle);                                                 //获取缓冲区可用储存空间
+//分段记录功能
+#if(RING_BUFFER_USE_CHAPTER)
+uint8_t Ring_Buffer_Chapter_Set_Active_End(ring_buffer *ring_buffer_handle);                                        //结束保存一个分段记录
+uint32_t Ring_Buffer_Chapter_Get_Count(ring_buffer *ring_buffer_handle);                                            //获取已记录的分段数量
+uint32_t Ring_Buffer_Chapter_Get_Standby_Length(ring_buffer *ring_buffer_handle);                                   //获取待取出的分段内容长度
+uint8_t Ring_Buffer_Chapter_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr);                     //读取一段完整的分段内容
+#endif//#if(RING_BUFFER_USE_CHAPTER)
 
-#endif
+#endif//#ifndef _RING_BUFFER_H_

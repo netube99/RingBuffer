@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "ring_buffer.h": "c",
+        "vcruntime.h": "c"
+    }
+}

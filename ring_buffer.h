@@ -9,9 +9,6 @@
 #ifndef _RING_BUFFER_H_
 #define _RING_BUFFER_H_
 
-#include <stdint.h>
-#include <string.h>
-
 #define RING_BUFFER_SUCCESS     0x01
 #define RING_BUFFER_ERROR       0x00
 

@@ -26,11 +26,6 @@ uint8_t Ring_Buffer_Init(ring_buffer *ring_buffer_handle, uint8_t *buffer_addr ,
     ring_buffer_handle->Length = 0 ;                //复位已存储数据长度
     ring_buffer_handle->array_addr = buffer_addr ;  //缓冲区储存数组基地址
     ring_buffer_handle->max_Length = buffer_size ;  //缓冲区最大可储存数据量
-    #if(RING_BUFFER_USE_CHAPTER)
-    ring_buffer_handle->chapter_number = 0 ;        //分段记录数量为0
-    ring_buffer_handle->chapter_standby = 0 ;       //分段长度记录数组待机下标
-    ring_buffer_handle->chapter_active = 0 ;        //分段长度记录数组活动下标
-    #endif
     if(ring_buffer_handle->max_Length < 2)          //缓冲区数组必须有两个元素以上
         return RING_BUFFER_ERROR ;                  //缓冲区数组过小，队列初始化失败
     else
@@ -56,13 +51,7 @@ uint8_t Ring_Buffer_Delete(ring_buffer *ring_buffer_handle, uint32_t Length)
         else
             ring_buffer_handle->head += Length ;    //头指针向前推进，抛弃数据
         ring_buffer_handle->Length -= Length ;      //重新记录有效数据长度
-        #if(RING_BUFFER_USE_CHAPTER)
-        uint32_t len = Length ;
-        while(len)
-        {
-            
-        }
-        #endif
+
         return RING_BUFFER_SUCCESS ;//已储存的数据量小于需删除的数据量
     }
 }
@@ -230,93 +219,3 @@ uint32_t Ring_Buffer_Get_FreeSize(ring_buffer *ring_buffer_handle)
     return (ring_buffer_handle->max_Length - ring_buffer_handle->Length) ;
 }
 
-#if(RING_BUFFER_USE_CHAPTER)
-/**
- * \brief 结束记录活动分段
- * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \return 分段记录结果
- *      \arg RING_BUFFER_SUCCESS: 分段成功
- *      \arg RING_BUFFER_ERROR: 分段失败(分段记录数量已达到上限)
-*/
-uint8_t Ring_Buffer_Chapter_Set_Active_End(ring_buffer *ring_buffer_handle)
-{
-    if(ring_buffer_handle->chapter_number < RING_BUFFER_MAX_CHAPTER_NUMBER)
-    {
-        ring_buffer_handle->chapter_number ++ ;
-        ring_buffer_handle->chapter_active ++ ;
-        if(ring_buffer_handle->chapter_active >= RING_BUFFER_MAX_CHAPTER_NUMBER)
-            ring_buffer_handle->chapter_active = 0 ;
-        return RING_BUFFER_SUCCESS ;
-    }
-    return RING_BUFFER_ERROR ;
-}
-
-/**
- * \brief 获取当前已储存的分段数量
- * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \return 已储存的分段数量
-*/
-uint32_t Ring_Buffer_Chapter_Get_Count(ring_buffer *ring_buffer_handle, uint8_t *output_addr)
-{
-    return ring_buffer_handle->chapter_number ;
-}
-
-/**
- * \brief 获取待取出的分段内容长度
- * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \return 待取出的分段内容长度
-*/
-uint32_t Ring_Buffer_Chapter_Get_Standby_Length(ring_buffer *ring_buffer_handle)
-{
-    return ring_buffer_handle->chapter_buffer[ring_buffer_handle->chapter_standby];
-}
-
-/**
- * \brief 向缓冲区头部读字节，保存到指定的地址
- * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \param[out] output_addr: 读取的数据保存地址
- * \param[in] read_Length: 要读取的字节数
- * \return 返回缓冲区头部读分段长度字节的结果
- *      \arg RING_BUFFER_SUCCESS: 读取成功
- *      \arg RING_BUFFER_ERROR: 读取失败(没有可读取的分段)
-*/
-uint8_t Ring_Buffer_Chapter_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr)
-{
-    if(Ring_Buffer_Get_Chapter_Number(ring_buffer_handle))
-    {
-        Ring_Buffer_Read_String(ring_buffer_handle, output_addr, \
-            ring_buffer_handle->chapter_buffer[ring_buffer_handle->chapter_standby]);
-        ring_buffer_handle->chapter_number -- ;     //已记录的分段数量 -1
-        ring_buffer_handle->chapter_standby ++ ;    //待读取的分段下标后移
-        if(ring_buffer_handle->chapter_standby >= RING_BUFFER_MAX_CHAPTER_NUMBER)
-            ring_buffer_handle->chapter_standby = 0 ;
-        return RING_BUFFER_SUCCESS ;
-    }
-    return RING_BUFFER_ERROR ;
-}
-#endif
-
-/**
- * \brief 向缓冲区头部读分段长度的数据，保存到指定的地址
- * \param[in] ring_buffer_handle: 缓冲区结构体句柄
- * \param[out] output_addr: 读取的数据保存地址
- * \param[in] read_Length: 要读取的字节数
- * \return 返回缓冲区头部读分段长度字节的结果
- *      \arg RING_BUFFER_SUCCESS: 读取成功
- *      \arg RING_BUFFER_ERROR: 读取失败(没有可读取的分段)
-*/
-uint8_t Ring_Buffer_Chapter_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr)
-{
-    if(Ring_Buffer_Get_Chapter_Number(ring_buffer_handle))
-    {
-        Ring_Buffer_Read_String(ring_buffer_handle, output_addr, \
-            ring_buffer_handle->chapter_buffer[ring_buffer_handle->chapter_standby]);
-        ring_buffer_handle->chapter_number -- ;     //已记录的分段数量 -1
-        ring_buffer_handle->chapter_standby ++ ;    //待读取的分段下标后移
-        if(ring_buffer_handle->chapter_standby >= RING_BUFFER_MAX_CHAPTER_NUMBER)
-            ring_buffer_handle->chapter_standby = 0 ;
-        return RING_BUFFER_SUCCESS ;
-    }
-    return RING_BUFFER_ERROR ;
-}
-#endif

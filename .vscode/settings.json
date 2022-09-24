@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "ring_buffer.h": "c",
-        "vcruntime.h": "c"
+        "vcruntime.h": "c",
+        "ring_buffer_chapter.h": "c"
     }
 }

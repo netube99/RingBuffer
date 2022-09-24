@@ -26,16 +26,16 @@ int main()
     ring_buffer RB ;
     
     //初始化RingBuffer操作句柄，绑定缓冲区数组；
-    Ring_Buffer_Init(&RB, buffer, READ_BUFFER_SIZE);
+    RB_Init(&RB, buffer, READ_BUFFER_SIZE);
     
     //向环形缓冲区写入一段字节和一个字节
-    Ring_Buffer_Write_String(&RB, "hello world", 11);
-    Ring_Buffer_Write_Byte(&RB, '!');
+    RB_Write_String(&RB, "hello world", 11);
+    RB_Write_Byte(&RB, '!');
     
     //获取已储存的数据长度，读出环形缓冲区中的数据并打印
-    uint32_t num = Ring_Buffer_Get_Length(&RB);
+    uint32_t num = RB_Get_Length(&RB);
     uint8_t get[16] ;
-    Ring_Buffer_Read_String(&RB, get, num);
+    RB_Read_String(&RB, get, num);
     printf("%s", get);
     
     return 0 ;
@@ -47,5 +47,5 @@ int main()
 2021.01.27 v1.2.0 重制匹配字符查找函数，现已支持8位到32位关键词查询<br>
 2021.01.28 v1.3.0 复位函数修改为删除函数、增加关键词插入函数（自适应大小端）<br>
 2021.01.30 v1.3.1 修复了String读写函数的小概率指针溢出错误<br>
-2021.06.29 v1.3.2 修复了 Ring_Buffer_Write_String 的参数类型错误，修复了Ring_Buffer_Write_Byte 无法写数组最后一位的问题<br>
-2022.05.31 v1.4.0 删除了关键词插入/查询功能，并使用分段结束记录功能替换；修改函数Ring_Buffer_Read_Byte的输出方式<br>
+2021.06.29 v1.3.2 修复了 RB_Write_String 的参数类型错误，修复了RB_Write_Byte 无法写数组最后一位的问题<br>
+2022.05.31 v1.4.0 删除了关键词插入/查询功能，并使用分段结束记录功能替换；修改函数RB_Read_Byte的输出方式<br>

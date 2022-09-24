@@ -1,22 +1,42 @@
+/**
+ * \file ring_buffer_chapter.h
+ * \brief 简易分段环形缓冲相关定义与声明
+ * \author netube_99\netube@163.com
+ * \date 2022.09.25
+ * \version v0.1
+*/
+
 #ifndef _RING_BUFFER_CHAPTER_H_
 #define _RING_BUFFER_CHAPTER_H_
 
-#include <stdint.h>
+#include "ring_buffer.h"
 
-//最大分段记录量，根据具体使用情况修改
-#define RING_BUFFER_MAX_CHAPTER_NUMBER      16
+//返回值定义
+#define RING_BUFFER_CHAPTER_SUCCESS     0x01
+#define RING_BUFFER_CHAPTER_ERROR       0x00
 
+//环形缓冲分段结构体
 typedef struct
 {
-    uint32_t chapter_buffer[RING_BUFFER_MAX_CHAPTER_NUMBER]; //分段长度记录
-    uint32_t chapter_standby;   //待机分段（最先输出的分段记录）的缓存下标
-    uint32_t chapter_active;    //活动分段（最后输入且未结束的分段记录）的缓存下标
-    uint32_t chapter_number;    //已记录的分段数量
+    ring_buffer base_handle ;       //数据储存环形缓冲区句柄
+    ring_buffer chapter_handle ;    //分段记录环形缓冲区句柄
+    uint32_t head_chapter_length;   //当前头分段可读字节数
+    uint32_t tail_chapter_length;   //当前尾分段暂存字节计数
+    uint8_t init_flag;              //初始化完成标志位
 }ring_buffer_chapter;
 
-uint8_t Ring_Buffer_Chapter_Set_Active_End(ring_buffer *ring_buffer_handle);                                        //结束保存一个分段记录
-uint32_t Ring_Buffer_Chapter_Get_Count(ring_buffer *ring_buffer_handle);                                            //获取已记录的分段数量
-uint32_t Ring_Buffer_Chapter_Get_Standby_Length(ring_buffer *ring_buffer_handle);                                   //获取待取出的分段内容长度
-uint8_t Ring_Buffer_Chapter_Read_String(ring_buffer *ring_buffer_handle, uint8_t *output_addr);                     //读取一段完整的分段内容
+uint8_t RBC_Init(ring_buffer_chapter *rbc_handle,\
+                uint8_t *base_buffer_addr, uint32_t base_buffer_size,\
+                uint8_t *chapter_buffer_addr, uint32_t chapter_buffer_size);                                //初始化带分段功能的环形缓冲区
+uint8_t RBC_Write_Byte(ring_buffer_chapter *rbc_handle, uint8_t data);                                      //向尾分段里写一个字节
+uint8_t RBC_Write_String(ring_buffer_chapter *rbc_handle, uint8_t *input_addr, uint32_t write_Length);      //向尾分段里写指定长度数据
+uint8_t RBC_Ending_Chapter(ring_buffer_chapter *rbc_handle);                                                //分段结尾，完成一次分段记录
+uint8_t RBC_Read_Byte(ring_buffer_chapter *rbc_handle, uint8_t *output_addr);                               //从头分段读取一个字节
+uint8_t RBC_Read_Chapter(ring_buffer_chapter *rbc_handle, uint8_t *output_addr, uint32_t *output_Length);   //读取整个头分段
+uint8_t RBC_Delete(ring_buffer_chapter *rbc_handle, uint32_t Chapter_Number);                               //从头分段开始删除指定数量的分段
+uint32_t RBC_Get_head_Chapter_length(ring_buffer_chapter *rbc_handle);                                      //获取当前头分段的长度
+uint32_t RBC_Get_Chapter_Number(ring_buffer_chapter *rbc_handle);                                           //获取当前已记录的分段数量
+uint32_t RBC_Get_Base_Free_Size(ring_buffer_chapter *rbc_handle);                                           //获取数据环剩余可用空间
+uint32_t RBC_Get_Chapter_Free_Size(ring_buffer_chapter *rbc_handle);                                        //获取剩余可记录的分段数量
 
 #endif

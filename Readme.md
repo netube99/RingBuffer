@@ -90,10 +90,10 @@ int main(void)
         RBC_Read_Chapter(&rbc, get, NULL);
         printf("%s\r\n", get);
     }
-	
+    
     //控制台输出内容
     //string1!
-	//string2!
+    //string2!
     return 0;
 }
 ```

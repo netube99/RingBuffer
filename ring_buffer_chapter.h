@@ -3,7 +3,7 @@
  * \brief 简易分段环形缓冲相关定义与声明
  * \author netube_99\netube@163.com
  * \date 2022.09.25
- * \version v0.1
+ * \version v0.4.0
 */
 
 #ifndef _RING_BUFFER_CHAPTER_H_
@@ -27,7 +27,7 @@ typedef struct
 
 uint8_t RBC_Init(ring_buffer_chapter *rbc_handle,\
                 uint8_t *base_buffer_addr, uint32_t base_buffer_size,\
-                uint8_t *chapter_buffer_addr, uint32_t chapter_buffer_size);                                //初始化带分段功能的环形缓冲区
+                uint32_t *chapter_buffer_addr, uint32_t chapter_buffer_size);                               //初始化带分段功能的环形缓冲区
 uint8_t RBC_Write_Byte(ring_buffer_chapter *rbc_handle, uint8_t data);                                      //向尾分段里写一个字节
 uint8_t RBC_Write_String(ring_buffer_chapter *rbc_handle, uint8_t *input_addr, uint32_t write_Length);      //向尾分段里写指定长度数据
 uint8_t RBC_Ending_Chapter(ring_buffer_chapter *rbc_handle);                                                //分段结尾，完成一次分段记录

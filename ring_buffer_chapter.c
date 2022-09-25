@@ -3,7 +3,7 @@
  * \brief 简易分段环形缓冲的实现
  * \author netube_99\netube@163.com
  * \date 2022.09.25
- * \version v0.1
+ * \version v0.4.0
 */
 
 #include <stdint.h>
@@ -20,11 +20,13 @@
  *      \arg RING_BUFFER_CHAPTER_SUCCESS: 初始化成功
  *      \arg RING_BUFFER_CHAPTER_ERROR: 初始化失败
 */
-uint8_t RBC_Init(ring_buffer_chapter *rbc_handle, uint8_t *base_buffer_addr, uint32_t base_buffer_size, uint8_t *chapter_buffer_addr, uint32_t chapter_buffer_size)
+uint8_t RBC_Init(ring_buffer_chapter *rbc_handle,\
+                uint8_t *base_buffer_addr, uint32_t base_buffer_size,\
+                uint32_t *chapter_buffer_addr, uint32_t chapter_buffer_size)
 {
     if(!RB_Init(&(rbc_handle->base_handle), base_buffer_addr, base_buffer_size))
         return RING_BUFFER_CHAPTER_ERROR ;
-    if(!RB_Init(&(rbc_handle->chapter_handle), chapter_buffer_addr, chapter_buffer_size))
+    if(!RB_Init(&(rbc_handle->chapter_handle), (uint8_t *)chapter_buffer_addr, chapter_buffer_size))
         return RING_BUFFER_CHAPTER_ERROR ;
     rbc_handle->head_chapter_length = 0 ;
     rbc_handle->tail_chapter_length = 0 ;

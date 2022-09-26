@@ -21,15 +21,15 @@
 */
 uint8_t RB_Init(ring_buffer *rb_handle, uint8_t *buffer_addr ,uint32_t buffer_size)
 {
+    //缓冲区数组空间必须大于2且小于数据类型最大值
+    if(buffer_size < 2 || buffer_size == 0xFFFFFFFF)
+        return RING_BUFFER_ERROR ; //初始化失败
     rb_handle->head = 0 ; //复位头指针
     rb_handle->tail = 0 ; //复位尾指针
     rb_handle->Length = 0 ; //复位已存储数据长度
     rb_handle->array_addr = buffer_addr ; //缓冲区储存数组基地址
     rb_handle->max_Length = buffer_size ; //缓冲区最大可储存数据量
-    if(rb_handle->max_Length < 2) //缓冲区数组必须有两个元素以上
-        return RING_BUFFER_ERROR ; //缓冲区数组过小，队列初始化失败
-    else
-        return RING_BUFFER_SUCCESS ; //缓冲区初始化成功
+    return RING_BUFFER_SUCCESS ; //缓冲区初始化成功
 }
 
 /**
@@ -51,7 +51,6 @@ uint8_t RB_Delete(ring_buffer *rb_handle, uint32_t Length)
         else
             rb_handle->head += Length ;    //头指针向前推进，抛弃数据
         rb_handle->Length -= Length ;      //重新记录有效数据长度
-
         return RING_BUFFER_SUCCESS ;//已储存的数据量小于需删除的数据量
     }
 }

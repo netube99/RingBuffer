@@ -126,23 +126,15 @@ uint8_t RB_Write_String(ring_buffer *rb_handle, uint8_t *input_addr, uint32_t wr
         {
             write_size_a = rb_handle->max_Length - rb_handle->tail ;//从尾指针开始写到储存数组末尾
             write_size_b = write_Length - write_size_a ;//从储存数组开头写数据
-        }
-        else//如果顺序可用长度大于或等于需写入的长度，则只需要写入一次
-        {
-            write_size_a = write_Length ;//从尾指针开始写到储存数组末尾
-            write_size_b = 0 ;//无需从储存数组开头写数据
-        }
-        //开始写入数据
-        if(write_size_b != 0)//需要写入两次
-        {
             //分别拷贝a、b段数据到储存数组中
             memcpy(rb_handle->array_addr + rb_handle->tail, input_addr, write_size_a);
             memcpy(rb_handle->array_addr, input_addr + write_size_a, write_size_b);
             rb_handle->Length += write_Length ;//记录新存储了多少数据量
             rb_handle->tail = write_size_b ;//重新定位尾指针位置
         }
-        else//只需写入一次
+        else//如果顺序可用长度大于或等于需写入的长度，则只需要写入一次
         {
+            write_size_a = write_Length ;//从尾指针开始写到储存数组末尾
             memcpy(rb_handle->array_addr + rb_handle->tail, input_addr, write_size_a);
             rb_handle->Length += write_Length ;//记录新存储了多少数据量
             rb_handle->tail += write_size_a ;//重新定位尾指针位置
@@ -173,14 +165,6 @@ uint8_t RB_Read_String(ring_buffer *rb_handle, uint8_t *output_addr, uint32_t re
         {
             Read_size_a = rb_handle->max_Length - rb_handle->head ;
             Read_size_b = read_Length - Read_size_a ;
-        }
-        else
-        {
-            Read_size_a = read_Length ;
-            Read_size_b = 0 ;
-        }
-        if(Read_size_b != 0)//需要读取两次
-        {
             memcpy(output_addr, rb_handle->array_addr + rb_handle->head, Read_size_a);
             memcpy(output_addr + Read_size_a, rb_handle->array_addr, Read_size_b);
             rb_handle->Length -= read_Length ;//记录剩余数据量
@@ -188,6 +172,7 @@ uint8_t RB_Read_String(ring_buffer *rb_handle, uint8_t *output_addr, uint32_t re
         }
         else
         {
+            Read_size_a = read_Length ;
             memcpy(output_addr, rb_handle->array_addr + rb_handle->head, Read_size_a);
             rb_handle->Length -= read_Length ;//记录剩余数据量
             rb_handle->head += Read_size_a ;//重新定位头指针位置

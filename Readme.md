@@ -1,8 +1,8 @@
 # RingBuffer 轻量级环形缓冲区
-[![GitHub repository](https://img.shields.io/badge/github-RingBuffer-blue)](https://github.com/netube99/RingBuffer) [![GitHub license](https://img.shields.io/github/license/netube99/RingBuffer?color=green)](https://github.com/netube99/RingBuffer/blob/main/LICENSE) [![Language](https://img.shields.io/badge/make%20with-C-red)]()
 
 ## 简介
-RingBuffer 是一个基于C语言开发的轻量级环形缓冲区，适用于各嵌入式平台的串口收发等应用场景；在基本功能的基础上还提供了一个分段记录框架，使得数据管理更加方便；代码在AT32F403A平台上编译运行，经过简单的串口收发测试后暂未发现显性BUG但不保证稳定性，用于产品开发的话请务必谨慎测试，如果发现BUG请及时反馈，谢谢；
+项目未能实现线程安全，仅供学习参考，工程项目请谨慎使用！！！
+RingBuffer 是一个基于C语言开发的轻量级环形缓冲区，适用于各嵌入式平台的串口收发等应用场景；在基本功能的基础上还提供了一个分段记录框架，方便数据管理；代码在AT32F403A平台上编译运行，经过简单的串口收发测试后暂未发现显性BUG；
 
 ## 开始
 ### 基础功能 RingBuffer Base 的使用方法

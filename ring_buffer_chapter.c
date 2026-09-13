@@ -7,6 +7,7 @@
 */
 
 #include <stdint.h>
+#include <stddef.h>
 #include "ring_buffer_chapter.h"
 
 //内部无锁核心，核心函数内部调用基础版公开接口（依赖临界区钩子支持嵌套）

@@ -2,204 +2,271 @@
  * \file ring_buffer.c
  * \brief 简易环形缓冲的实现
  * \author netube_99\netube@163.com
- * \date 2022.08.20
- * \version v0.4.0
+ * \date 2026.09.13
+ * \version v0.5.0
 */
 
 #include <stdint.h>
 #include <string.h>
 #include "ring_buffer.h"
 
-/**
- * \brief 初始化新缓冲区
- * \param[out] rb_handle: 待初始化的缓冲区结构体句柄
- * \param[in] buffer_addr: 外部定义的缓冲区数组，类型必须为 uint8_t
- * \param[in] buffer_size: 外部定义的缓冲区数组空间
- * \return 返回缓冲区初始化的结果
- *      \arg RING_BUFFER_SUCCESS: 初始化成功
- *      \arg RING_BUFFER_ERROR: 初始化失败
-*/
-uint8_t RB_Init(ring_buffer *rb_handle, uint8_t *buffer_addr ,uint32_t buffer_size)
+//内部无锁核心，公开接口仅在封装层进出临界区
+
+static rb_status_t rb_init_core(ring_buffer *rb_handle, uint8_t *buffer_addr ,uint32_t buffer_size)
 {
-    //缓冲区数组空间必须大于2且小于数据类型最大值
+    //缓冲区数组空间必须不小于2且小于数据类型最大值
     if(buffer_size < 2 || buffer_size == 0xFFFFFFFF)
-        return RING_BUFFER_ERROR ; //初始化失败
-    rb_handle->head = 0 ; //复位头指针
-    rb_handle->tail = 0 ; //复位尾指针
-    rb_handle->Length = 0 ; //复位已存储数据长度
-    rb_handle->array_addr = buffer_addr ; //缓冲区储存数组基地址
-    rb_handle->max_Length = buffer_size ; //缓冲区最大可储存数据量
-    return RING_BUFFER_SUCCESS ; //缓冲区初始化成功
+        return RB_ERR_PARAM ;
+    rb_handle->head = 0 ;
+    rb_handle->tail = 0 ;
+    rb_handle->Length = 0 ;
+    rb_handle->array_addr = buffer_addr ;
+    rb_handle->max_Length = buffer_size ;
+    return RB_OK ;
 }
 
-/**
- * \brief 从头指针开始删除指定长度的数据
- * \param[out] rb_handle: 缓冲区结构体句柄
- * \param[in] Length: 要删除的长度
- * \return 返回删除指定长度数据结果
- *      \arg RING_BUFFER_SUCCESS: 删除成功
- *      \arg RING_BUFFER_ERROR: 删除失败
-*/
-uint8_t RB_Delete(ring_buffer *rb_handle, uint32_t Length)
+static rb_status_t rb_clear_core(ring_buffer *rb_handle)
 {
-    if(rb_handle->Length < Length)
-        return RING_BUFFER_ERROR ;//已储存的数据量小于需删除的数据量
+    rb_handle->head = 0 ;
+    rb_handle->tail = 0 ;
+    rb_handle->Length = 0 ;
+    return RB_OK ;
+}
+
+static rb_status_t rb_write_string_core(ring_buffer *rb_handle, const uint8_t *input_addr, uint32_t write_Length)
+{
+    //剩余空间不足则整体拒绝（先减后比，防止长度回绕绕过检查）
+    if(write_Length > (rb_handle->max_Length - rb_handle->Length))
+        return RB_ERR_FULL ;
+    uint32_t write_size_a, write_size_b ;
+    if((rb_handle->max_Length - rb_handle->tail) < write_Length)
+    {
+        //写入长度小于顺序可用空间，拆成两段分别写入
+        write_size_a = rb_handle->max_Length - rb_handle->tail ;
+        write_size_b = write_Length - write_size_a ;
+        memcpy(rb_handle->array_addr + rb_handle->tail, input_addr, write_size_a);
+        memcpy(rb_handle->array_addr, input_addr + write_size_a, write_size_b);
+        rb_handle->tail = write_size_b ;
+    }
     else
     {
-        if((rb_handle->head + Length) >= rb_handle->max_Length)
-            rb_handle->head = Length - (rb_handle->max_Length - rb_handle->head);
-        else
-            rb_handle->head += Length ;    //头指针向前推进，抛弃数据
-        rb_handle->Length -= Length ;      //重新记录有效数据长度
-        return RING_BUFFER_SUCCESS ;//已储存的数据量小于需删除的数据量
+        write_size_a = write_Length ;
+        memcpy(rb_handle->array_addr + rb_handle->tail, input_addr, write_size_a);
+        rb_handle->tail += write_size_a ;
+        if(rb_handle->tail == rb_handle->max_Length)
+            rb_handle->tail = 0 ;//尾指针写到数组尾部，回到开头
     }
+    rb_handle->Length += write_Length ;
+    return RB_OK ;
 }
 
-/**
- * \brief 向缓冲区尾部写一个字节
- * \param[out] rb_handle: 缓冲区结构体句柄
- * \param[in] data: 要写入的字节
- * \return 返回缓冲区写字节的结果
- *      \arg RING_BUFFER_SUCCESS: 写入成功
- *      \arg RING_BUFFER_ERROR: 写入失败
-*/
-uint8_t RB_Write_Byte(ring_buffer *rb_handle, uint8_t data)
-{
-    //缓冲区数组已满，产生覆盖错误
-    if(rb_handle->Length == (rb_handle->max_Length))
-        return RING_BUFFER_ERROR ;
-    else
-    {
-        *(rb_handle->array_addr + rb_handle->tail) = data;//基地址+偏移量，存放数据
-        rb_handle->Length ++ ;//数据量计数+1
-        rb_handle->tail ++ ;//尾指针后移
-    }
-    //如果尾指针超越了数组末尾，尾指针指向缓冲区数组开头，形成闭环
-    if(rb_handle->tail > (rb_handle->max_Length - 1))
-        rb_handle->tail = 0 ;
-	return RING_BUFFER_SUCCESS ;
-}
-
-/**
- * \brief 从缓冲区头指针读取一个字节
- * \param[out] rb_handle: 缓冲区结构体句柄
- * \param[out] output_addr: 读取的字节保存地址
- * \return 返回读取状态
- *      \arg RING_BUFFER_SUCCESS: 读取成功
- *      \arg RING_BUFFER_ERROR: 读取失败
-*/
-uint8_t RB_Read_Byte(ring_buffer *rb_handle, uint8_t *output_addr)
-{
-    if (rb_handle->Length != 0)//有数据未读出
-    {
-        *output_addr = *(rb_handle->array_addr + rb_handle->head);//读取数据
-        rb_handle->head ++ ;
-        rb_handle->Length -- ;//数据量计数-1
-        //如果头指针超越了数组末尾，头指针指向数组开头，形成闭环
-        if(rb_handle->head > (rb_handle->max_Length - 1))
-            rb_handle->head = 0 ;
-        return RING_BUFFER_SUCCESS ;
-    }
-    return RING_BUFFER_ERROR ;
-}
-
-/**
- * \brief 向缓冲区尾部写指定长度的数据
- * \param[out] rb_handle: 缓冲区结构体句柄
- * \param[out] input_addr: 待写入数据的基地址
- * \param[in] write_Length: 要写入的字节数
- * \return 返回缓冲区尾部写指定长度字节的结果
- *      \arg RING_BUFFER_SUCCESS: 写入成功
- *      \arg RING_BUFFER_ERROR: 写入失败
-*/
-uint8_t RB_Write_String(ring_buffer *rb_handle, uint8_t *input_addr, uint32_t write_Length)
-{
-    //如果不够存储空间存放新数据,返回错误
-    if((rb_handle->Length + write_Length) > (rb_handle->max_Length))
-        return RING_BUFFER_ERROR ;
-    else
-    {
-        //设置两次写入长度
-        uint32_t write_size_a, write_size_b ;
-        //如果顺序可用长度小于需写入的长度，需要将数据拆成两次分别写入
-        if((rb_handle->max_Length - rb_handle->tail) < write_Length)
-        {
-            write_size_a = rb_handle->max_Length - rb_handle->tail ;//从尾指针开始写到储存数组末尾
-            write_size_b = write_Length - write_size_a ;//从储存数组开头写数据
-            //分别拷贝a、b段数据到储存数组中
-            memcpy(rb_handle->array_addr + rb_handle->tail, input_addr, write_size_a);
-            memcpy(rb_handle->array_addr, input_addr + write_size_a, write_size_b);
-            rb_handle->Length += write_Length ;//记录新存储了多少数据量
-            rb_handle->tail = write_size_b ;//重新定位尾指针位置
-        }
-        else//如果顺序可用长度大于或等于需写入的长度，则只需要写入一次
-        {
-            write_size_a = write_Length ;//从尾指针开始写到储存数组末尾
-            memcpy(rb_handle->array_addr + rb_handle->tail, input_addr, write_size_a);
-            rb_handle->Length += write_Length ;//记录新存储了多少数据量
-            rb_handle->tail += write_size_a ;//重新定位尾指针位置
-            if(rb_handle->tail == rb_handle->max_Length)
-                rb_handle->tail = 0 ;//如果写入数据后尾指针刚好写到数组尾部，则回到开头，防止越位
-        }
-        return RING_BUFFER_SUCCESS ;
-    }
-}
-
-/**
- * \brief 从缓冲区头部读指定长度的数据，保存到指定的地址
- * \param[out] rb_handle: 缓冲区结构体句柄
- * \param[out] output_addr: 读取的数据保存地址
- * \param[in] read_Length: 要读取的字节数
- * \return 返回缓冲区头部读指定长度字节的结果
- *      \arg RING_BUFFER_SUCCESS: 读取成功
- *      \arg RING_BUFFER_ERROR: 读取失败
-*/
-uint8_t RB_Read_String(ring_buffer *rb_handle, uint8_t *output_addr, uint32_t read_Length)
+static rb_status_t rb_read_string_core(ring_buffer *rb_handle, uint8_t *output_addr, uint32_t read_Length)
 {
     if(read_Length > rb_handle->Length)
-        return RING_BUFFER_ERROR ;
+        return RB_ERR_EMPTY ;
+    uint32_t Read_size_a, Read_size_b ;
+    if(read_Length > (rb_handle->max_Length - rb_handle->head))
+    {
+        //读取长度小于顺序可用空间，拆成两段分别读取
+        Read_size_a = rb_handle->max_Length - rb_handle->head ;
+        Read_size_b = read_Length - Read_size_a ;
+        memcpy(output_addr, rb_handle->array_addr + rb_handle->head, Read_size_a);
+        memcpy(output_addr + Read_size_a, rb_handle->array_addr, Read_size_b);
+        rb_handle->head = Read_size_b ;
+    }
     else
     {
-        uint32_t Read_size_a, Read_size_b ;
-        if(read_Length > (rb_handle->max_Length - rb_handle->head))
-        {
-            Read_size_a = rb_handle->max_Length - rb_handle->head ;
-            Read_size_b = read_Length - Read_size_a ;
-            memcpy(output_addr, rb_handle->array_addr + rb_handle->head, Read_size_a);
-            memcpy(output_addr + Read_size_a, rb_handle->array_addr, Read_size_b);
-            rb_handle->Length -= read_Length ;//记录剩余数据量
-            rb_handle->head = Read_size_b ;//重新定位头指针位置
-        }
-        else
-        {
-            Read_size_a = read_Length ;
-            memcpy(output_addr, rb_handle->array_addr + rb_handle->head, Read_size_a);
-            rb_handle->Length -= read_Length ;//记录剩余数据量
-            rb_handle->head += Read_size_a ;//重新定位头指针位置
-            if(rb_handle->head == rb_handle->max_Length)
-                rb_handle->head = 0 ;//如果读取数据后头指针刚好写到数组尾部，则回到开头，防止越位
-        }
-        return RING_BUFFER_SUCCESS ;
+        Read_size_a = read_Length ;
+        memcpy(output_addr, rb_handle->array_addr + rb_handle->head, Read_size_a);
+        rb_handle->head += Read_size_a ;
+        if(rb_handle->head == rb_handle->max_Length)
+            rb_handle->head = 0 ;//头指针读到数组尾部，回到开头
     }
+    rb_handle->Length -= read_Length ;
+    return RB_OK ;
 }
 
-/**
- * \brief 获取缓冲区里已储存的数据长度
- * \param[in] rb_handle: 缓冲区结构体句柄
- * \return 返回缓冲区里已储存的数据长度
-*/
+static rb_status_t rb_peek_byte_core(ring_buffer *rb_handle, uint32_t offset, uint8_t *output_addr)
+{
+    if(offset >= rb_handle->Length)
+        return RB_ERR_EMPTY ;
+    uint32_t pos ;//减法定位，防止整数回绕
+    if(offset >= (rb_handle->max_Length - rb_handle->head))
+        pos = offset - (rb_handle->max_Length - rb_handle->head) ;
+    else
+        pos = rb_handle->head + offset ;
+    *output_addr = *(rb_handle->array_addr + pos) ;
+    return RB_OK ;
+}
+
+static rb_status_t rb_peek_string_core(ring_buffer *rb_handle, uint8_t *output_addr, uint32_t max_len, uint32_t *copied_Length)
+{
+    uint32_t peek_len = rb_handle->Length ;
+    if(peek_len > max_len)
+        peek_len = max_len ;
+    uint32_t copy_size_a = peek_len ;
+    uint32_t copy_size_b = 0 ;
+    if(peek_len > (rb_handle->max_Length - rb_handle->head))
+    {
+        copy_size_a = rb_handle->max_Length - rb_handle->head ;
+        copy_size_b = peek_len - copy_size_a ;
+    }
+    memcpy(output_addr, rb_handle->array_addr + rb_handle->head, copy_size_a);
+    memcpy(output_addr + copy_size_a, rb_handle->array_addr, copy_size_b);
+    *copied_Length = peek_len ;
+    return RB_OK ;
+}
+
+static rb_status_t rb_delete_core(ring_buffer *rb_handle, uint32_t Length)
+{
+    if(rb_handle->Length < Length)
+        return RB_ERR_EMPTY ;
+    if(Length >= (rb_handle->max_Length - rb_handle->head))//减法判断回绕，防止整数回绕
+        rb_handle->head = Length - (rb_handle->max_Length - rb_handle->head);
+    else
+        rb_handle->head += Length ;
+    rb_handle->Length -= Length ;
+    return RB_OK ;
+}
+
+//公开接口：参数校验 + 临界区 + 委托核心
+
+rb_status_t RB_Init(ring_buffer *rb_handle, uint8_t *buffer_addr ,uint32_t buffer_size)
+{
+    if(rb_handle == NULL || buffer_addr == NULL)
+        return RB_ERR_PARAM ;
+    return rb_init_core(rb_handle, buffer_addr, buffer_size) ;
+}
+
+rb_status_t RB_Clear(ring_buffer *rb_handle)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(rb_handle == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_clear_core(rb_handle) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
+rb_status_t RB_Write_Byte(ring_buffer *rb_handle, uint8_t data)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(rb_handle == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_write_string_core(rb_handle, &data, 1u) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
+rb_status_t RB_Write_String(ring_buffer *rb_handle, const uint8_t *input_addr, uint32_t write_Length)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(write_Length == 0u)//0 长度视为无操作，先于一切校验
+        return RB_OK ;
+    if(rb_handle == NULL || input_addr == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_write_string_core(rb_handle, input_addr, write_Length) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
+rb_status_t RB_Read_Byte(ring_buffer *rb_handle, uint8_t *output_addr)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(rb_handle == NULL || output_addr == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_read_string_core(rb_handle, output_addr, 1u) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
+rb_status_t RB_Read_String(ring_buffer *rb_handle, uint8_t *output_addr, uint32_t read_Length)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(read_Length == 0u)//0 长度视为无操作，先于一切校验
+        return RB_OK ;
+    if(rb_handle == NULL || output_addr == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_read_string_core(rb_handle, output_addr, read_Length) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
+rb_status_t RB_Peek_Byte(ring_buffer *rb_handle, uint32_t offset, uint8_t *output_addr)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(rb_handle == NULL || output_addr == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_peek_byte_core(rb_handle, offset, output_addr) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
+rb_status_t RB_Peek_String(ring_buffer *rb_handle, uint8_t *output_addr, uint32_t max_len, uint32_t *copied_Length)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(rb_handle == NULL || output_addr == NULL || copied_Length == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_peek_string_core(rb_handle, output_addr, max_len, copied_Length) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
+rb_status_t RB_Delete(ring_buffer *rb_handle, uint32_t Length)
+{
+    uint32_t key ;
+    rb_status_t ret ;
+    if(rb_handle == NULL)
+        return RB_ERR_PARAM ;
+    key = RB_CRITICAL_ENTER() ;
+    ret = rb_delete_core(rb_handle, Length) ;
+    RB_CRITICAL_EXIT(key) ;
+    return ret ;
+}
+
 uint32_t RB_Get_Length(ring_buffer *rb_handle)
 {
-    return rb_handle->Length ;
+    uint32_t len ;
+    if(rb_handle == NULL)
+        return 0 ;
+    uint32_t key = RB_CRITICAL_ENTER() ;
+    len = rb_handle->Length ;
+    RB_CRITICAL_EXIT(key) ;
+    return len ;
 }
 
-/**
- * \brief 获取缓冲区可用储存空间
- * \param[in] rb_handle: 缓冲区结构体句柄
- * \return 返回缓冲区可用储存空间
-*/
 uint32_t RB_Get_FreeSize(ring_buffer *rb_handle)
 {
-    return (rb_handle->max_Length - rb_handle->Length) ;
+    uint32_t len ;
+    if(rb_handle == NULL)
+        return 0 ;
+    uint32_t key = RB_CRITICAL_ENTER() ;
+    len = (rb_handle->max_Length - rb_handle->Length) ;
+    RB_CRITICAL_EXIT(key) ;
+    return len ;
 }
 
+uint32_t RB_Get_Capacity(ring_buffer *rb_handle)
+{
+    uint32_t len ;
+    if(rb_handle == NULL)
+        return 0 ;
+    uint32_t key = RB_CRITICAL_ENTER() ;
+    len = rb_handle->max_Length ;
+    RB_CRITICAL_EXIT(key) ;
+    return len ;
+}

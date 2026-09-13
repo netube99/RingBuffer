@@ -1,0 +1,48 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 1'   # weekly soak (longer property-test runs)
+
+jobs:
+  linux-sanitized:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests (${{ matrix.compiler }}, ASan+UBSan)
+        env:
+          CC: ${{ matrix.compiler }}
+          RB_TEST_SOAK: ${{ github.event_name == 'schedule' && '10' || '1' }}
+        run: |
+          sh tests/build.sh
+
+  linux-strict-warnings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Strict warning build (-Werror)
+        run: |
+          gcc -std=c99 -c -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
+              -Wstrict-prototypes -Wmissing-prototypes -Werror -I. \
+              ring_buffer.c -o /tmp/rb1.o
+          gcc -std=c99 -c -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion \
+              -Wstrict-prototypes -Wmissing-prototypes -Werror -I. \
+              ring_buffer_chapter.c -o /tmp/rb2.o
+
+  cross-arm-none-eabi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+      - name: Cross compile for Cortex-M4 (-Os, size check)
+        run: |
+          arm-none-eabi-gcc -std=c99 -mcpu=cortex-m4 -mthumb -Os -c -Wall -Wextra -I. \
+              ring_buffer.c ring_buffer_chapter.c
+          arm-none-eabi-size ring_buffer.o ring_buffer_chapter.o

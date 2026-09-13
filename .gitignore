@@ -1,2 +1,11 @@
 .vs
 test
+.vscode/
+tests/*.exe
+tests/test_base
+tests/test_chapter
+tests/repro_overflow
+tests/test_hooks
+tests/*.ps1
+*.o
+
